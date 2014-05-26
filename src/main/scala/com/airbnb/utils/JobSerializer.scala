@@ -65,6 +65,21 @@ class JobSerializer extends JsonSerializer[BaseJob] {
     baseJob.uris.foreach(json.writeString(_))
     json.writeEndArray()
 
+    json.writeFieldName("resources")
+    json.writeStartArray()
+    baseJob.resources.foreach{ t=>
+      json.writeStartObject()
+      json.writeFieldName(t._1.toString())
+      t._2 match {
+        case int: Int     => json.writeNumber(int)
+        case dbl: Double  => json.writeNumber(dbl)
+        case str: String  => json.writeString(str)
+        case other        => json.writeString(t._2.toString())
+      }
+      json.writeEndObject()
+    }
+    json.writeEndArray()
+
     if (baseJob.isInstanceOf[DependencyBasedJob]) {
       val depJob = baseJob.asInstanceOf[DependencyBasedJob]
       json.writeFieldName("parents")

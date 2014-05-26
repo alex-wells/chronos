@@ -109,7 +109,7 @@ class MesosTaskBuilder @Inject()(val conf: SchedulerConfiguration) {
             .addAllUris(uriProtos.asJava)
         })
     }
-
+/*
     val mem = if (job.mem > 0) job.mem else conf.mesosTaskMem()
     val cpus = if (job.cpus > 0) job.cpus else conf.mesosTaskCpu()
     val disk = if (job.disk > 0) job.disk else conf.mesosTaskDisk()
@@ -117,6 +117,15 @@ class MesosTaskBuilder @Inject()(val conf: SchedulerConfiguration) {
       .addResources(scalarResource(cpusResourceName, cpus, offer))
       .addResources(scalarResource(memResourceName, mem, offer))
       .addResources(scalarResource(diskResourceName, disk, offer))
+*/
+    job.resources.foreach{ resource =>
+      resource._2 match {
+        case int: Int => taskInfo.addResources(scalarResource(resource._1, int, offer))
+        case dbl: Double  => taskInfo.addResources(scalarResource(resource._1, dbl, offer))
+        case other => println( "MesosTaskBuilder.scala::getMesosTaskInfoBuilder(): unknown resource type '%s'".format(resource.toString()) )
+      }
+      println( "MesosTaskBuilder.scala::getMesosTaskInfoBuilder(): added resourcce '%s' for task '%s'".format(resource.toString(),job.name) )
+    }
 
     return taskInfo
   }

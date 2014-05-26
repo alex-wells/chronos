@@ -89,6 +89,34 @@ class JobDeserializer extends JsonDeserializer[BaseJob] {
       }
     }
 
+    var resources = Map[String,Any]()
+    if (node.has("resources")) {
+      println(" === processing resources hash ===")
+      for ( res <- node.path("resources")) {
+	res.fields().foreach{ t =>
+          if ( t.getValue().isInt() ) {
+            // parase value as Integer:
+            resources += (t.getKey() -> t.getValue().asInt())
+          } else if ( t.getValue().isDouble() ) {
+            // parse value as Double:
+            resources += (t.getKey() -> t.getValue().asDouble())
+          } else if ( t.getValue().isTextual() ) {
+            // parse value as string:
+            resources += (t.getKey() -> t.getValue().asText())
+          } else {
+            // don't know how to parse this!
+            println(" whilst processing resources hash: unknown value type `%s`".format(res.toString()))
+          }
+        }
+      }
+    }
+    else { 
+      if (cpus != 0 ) { resources += ("cpus" -> cpus.doubleValue()) }
+      if (disk != 0 ) { resources += ("disk" -> disk.doubleValue()) }
+      if (mem  != 0 ) { resources += ("mem"  -> mem)  }
+    }
+    
+
     val highPriority =
       if (node.has("highPriority") && node.get("highPriority") != null) node.get("highPriority").asBoolean()
       else false
@@ -102,13 +130,13 @@ class JobDeserializer extends JsonDeserializer[BaseJob] {
         name = name, command = command, epsilon = epsilon, successCount = successCount, errorCount = errorCount,
         executor = executor, executorFlags = executorFlags, retries = retries, owner = owner, lastError = lastError,
         lastSuccess = lastSuccess, async = async, cpus = cpus, disk = disk, mem = mem, disabled = disabled,
-        uris = uris, highPriority = highPriority)
+        uris = uris, highPriority = highPriority, resources = resources)
     } else if (node.has("schedule")) {
       new ScheduleBasedJob(node.get("schedule").asText, name = name, command = command,
         epsilon = epsilon, successCount = successCount, errorCount = errorCount, executor = executor,
         executorFlags = executorFlags, retries = retries, owner = owner, lastError = lastError,
         lastSuccess = lastSuccess, async = async, cpus = cpus, disk = disk, mem = mem, disabled = disabled,
-        uris = uris,  highPriority = highPriority)
+        uris = uris,  highPriority = highPriority, resources = resources)
     } else {
       throw new IllegalStateException("The job found was neither schedule based nor dependency based.")
     }
